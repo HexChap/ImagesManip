@@ -3,5 +3,5 @@ source = ""
 output = ""
 
 [watermark]
-path = "D:\\.Development\\.Projects\\HA.Estate\\ImageManip\\data\\logo.png"
+path = ""
 transparency_percent = 50

@@ -1,2 +1,5 @@
 aiofiles==24.1.0
 Pillow==10.4.0
+tomli-w
+pywin32
+pypiwin32

@@ -1,5 +1,8 @@
 import tomllib
+from pathlib import Path
 from typing import TypedDict
+
+settings_path = Path(__file__).parent.parent / "settings.toml"
 
 
 class Paths(TypedDict):
@@ -17,5 +20,9 @@ class Settings(TypedDict):
     watermark: Watermark
 
 
-with open("settings.toml", mode="rb") as fp:
-    settings: Settings = tomllib.load(fp)
+def load_settings() -> Settings:
+    with open(settings_path, mode="rb") as fp:
+        return tomllib.load(fp)
+
+
+settings = load_settings()

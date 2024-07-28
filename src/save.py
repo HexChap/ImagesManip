@@ -7,23 +7,22 @@ from PIL.ImageFile import ImageFile
 
 from src.core import get_paths
 
-output_path = Path(get_paths()["output"])
 
-
-async def save_images(images: list[ImageFile]):
+async def save_images(images: list[ImageFile], output: Path):
     async with asyncio.TaskGroup() as tg:
         for image in images:
-            tg.create_task(save_image(image))
+            tg.create_task(save_image(image, output))
 
 
-async def save_image(image: ImageFile):
+async def save_image(image: ImageFile, output: Path):
     """
     Asynchronously saves images.
 
+    :param output: Output path
     :param image: Image to save
     :return:
     """
-    path = output_path / Path(image.filename).name
+    path = output / Path(image.filename).name
 
     image = image.convert("RGB")
     image.save(buf := BytesIO(), format="JPEG")

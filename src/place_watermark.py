@@ -2,37 +2,35 @@ from PIL.ImageFile import ImageFile, Image
 
 from src.core import get_watermark_settings
 
-path, opacity_percent = get_watermark_settings().values()
-watermark = Image.open(path)
 
-
-def place_watermarks(images: list[ImageFile]):
+def place_watermarks(images: list[ImageFile], watermark: ImageFile):
     for image in images:
-        place_watermark(image)
+        place_watermark(image, watermark)
 
 
-def place_watermark(image: ImageFile):
-    wmark = _get_resized_watermark(*image.size)
-    offset = _get_watermark_offset(*image.size)
-    mask = _get_watermark_opacity_mask(wmark)
+def place_watermark(image: ImageFile, watermark: ImageFile):
+    watermark = _get_resized_watermark(image.size, watermark)
+    offset = _get_watermark_offset(image.size, watermark)
+    mask = _get_watermark_opacity_mask(watermark)
 
-    image.paste(wmark, box=offset, mask=mask)
+    image.paste(watermark, box=offset, mask=mask)
 
 
 def _get_watermark_opacity_mask(wmark: Image.Image) -> Image.Image:
+    opacity = get_watermark_settings()["transparency_percent"]
     alpha = wmark.getchannel("A")
 
-    return alpha.point(lambda a: a * opacity_percent / 100)
+    return alpha.point(lambda a: a * opacity / 100)
 
 
-def _get_resized_watermark(width: int, height: int) -> Image.Image:
-    width = _calc_watermark_width(width, height)
+def _get_resized_watermark(size: tuple[int, int], watermark: Image.Image) -> Image.Image:
+    width = _calc_watermark_width(size[0], size[1])
     return _resize_with_proportion(watermark, width)
 
 
-def _get_watermark_offset(width: int, height: int) -> tuple[int, int]:
-    x = (width // 2) - (watermark.width // 2)
-    y = (height // 2) - (watermark.height // 2)
+def _get_watermark_offset(size: tuple[int, int], watermark: Image.Image) -> tuple[int, int]:
+    x = (size[0] // 2) - (watermark.width // 2)
+    y = (size[1] // 2) - (watermark.height // 2)
 
     return x, y
 
