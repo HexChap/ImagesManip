@@ -12,3 +12,4 @@ __pypackages__/
 # Dev folders
 data/in
 data/out
+update_tools/

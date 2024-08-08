@@ -4,10 +4,12 @@ from pathlib import Path
 from PIL import Image
 
 from src.core import clear, get_paths, change_settings, get_watermark_settings
+from src.updater import do_update
 from src.place_watermark import place_watermarks
 from src.rename import rename_images
 from src.save import save_images
 from src.utils import get_image_paths
+from src import APP_NAME, __version__
 
 
 async def main():
@@ -69,4 +71,7 @@ async def main():
         print("Операция успешно выполнена!")
 
 
-asyncio.run(main())
+if __name__ == '__main__':
+    print(f'Starting {APP_NAME} {__version__}...')
+    do_update()
+    asyncio.run(main())
