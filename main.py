@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 
 from PIL import Image
-from gh_auto_updater import update
+from gh_auto_updater import update, FROZEN
 
 from src.core import clear, get_paths, change_settings, get_watermark_settings
 from src.place_watermark import place_watermarks
@@ -10,18 +10,22 @@ from src.rename import rename_images
 from src.save import save_images
 from src.utils import get_image_paths
 
-__version__ = "v3.0.4"
+__version__ = "v3.0.5"
 UPDATE_GH_REPO = "HexChap/ImagesManip"
 UPDATE_RATE_LIMIT = 60 * 60
+LAST_UPD_DATE_PATH = ".ghlastupdate"
+if FROZEN:
+    LAST_UPD_DATE_PATH = Path.cwd() / "_internal" / ".ghlastupdate"
 
 
 async def main():
+    print("Текущая версия " + __version__)
     await update(
         repository_name=UPDATE_GH_REPO,
         current_version=__version__,
         install_dir=Path.cwd(),
         updates_rate_limit_secs=UPDATE_RATE_LIMIT,
-        last_update_date_path=Path.cwd() / "_internal" / ".ghlastupdate"
+        last_update_date_path=LAST_UPD_DATE_PATH
     )
 
     error_msg = "Неверная опция! Попробуйте снова!\n"
