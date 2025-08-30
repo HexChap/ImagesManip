@@ -1,0 +1,19 @@
+[project]
+name = "imagesmanip"
+version = "3.0.6rc1"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiofiles==24.1.0",
+    "gh-auto-updater==0.1.32",
+    "pillow==10.4.0",
+    "pypiwin32>=223 ; sys_platform == 'win32'",
+    "pywin32>=311 ; sys_platform == 'win32'",
+    "tomli-w>=1.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.15.0",
+]

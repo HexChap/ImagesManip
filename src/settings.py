@@ -15,14 +15,19 @@ class Watermark(TypedDict):
     transparency_percent: int
 
 
+class Misc(TypedDict):
+    debug: bool
+
+
 class Settings(TypedDict):
     paths: Paths
     watermark: Watermark
+    misc: Misc
 
 
 def load_settings() -> Settings:
     with open(settings_path, mode="rb") as fp:
-        return tomllib.load(fp)
+        return Settings(**tomllib.load(fp))
 
 
 settings = load_settings()

@@ -1,59 +1,77 @@
 import os
-import win32con
-import win32gui
-from ctypes import windll
-from tkinter import filedialog
+import platform
+from tkinter import Tk, filedialog
 
 import tomli_w
 
 import src.settings as stngs
-from src.settings import settings, Watermark, Paths, Settings, load_settings
+from src.settings import Paths, Settings, Watermark, load_settings, settings
 
 TRANSPARENCY_DEFAULT_PERCENT = 50
 
-windll.shcore.SetProcessDpiAwareness(1)
+# Windows-only: high-DPI awareness
+if platform.system() == "Windows":
+    try:
+        from ctypes import windll
+
+        windll.shcore.SetProcessDpiAwareness(1)
+    except Exception:
+        pass
 
 
 def clear():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    os.system("cls" if os.name == "nt" else "clear")
 
 
 def ask_filename(filetypes_string: str) -> str:
     """
-
-    :param filetypes_string: >>> "Text Files\0*.TXT;*.DOC;*.BAK\0 Something cool\0*.png\0\0"
-    :return:
+    Cross-platform file dialog
+    :param filetypes_string: >>> "*.svg;*.png"
+    :return: selected file path
     """
-    customfilter = "Other file types\0*.*\0"
-    fname, customfilter, flags = win32gui.GetOpenFileNameW(
-        Flags=win32con.OFN_ALLOWMULTISELECT | win32con.OFN_EXPLORER | win32con.OFN_FILEMUSTEXIST,
-        DefExt="py",
-        Filter=filetypes_string,
-        CustomFilter=customfilter,
-        FilterIndex=0,
-    )
+    root = Tk()
+    root.withdraw()
 
+    # Parse Windows-style "*.SVG;*.png\0\0" → [("Images", ("*.svg", "*.png"))]
+    filetypes = []
+    if filetypes_string:
+        exts = [
+            e.strip()
+            for e in filetypes_string.replace("\0", "").split(";")
+            if e.strip()
+        ]
+        if exts:
+            filetypes.append(("Allowed files", exts))
+    filetypes.append(("All files", "*.*"))
+
+    fname = filedialog.askopenfilename(title="Выберите файл", filetypes=filetypes)
+    root.destroy()
     return fname
 
 
 def get_paths(*, force_rewrite: bool = False) -> Paths:
     """
     Get source and output paths from settings or ask user
-
-    :return: Tuple of source and output paths
     """
+
     def _ask_user() -> tuple[str, str]:
         clear()
         input("Выберите папку с фотками. \nНажмите клавишу Enter чтобы продолжить.")
-        in_folder = filedialog.askdirectory()
-        # in_folder = r"D:\Работа\ADVANCE\Бургас\Възраждане\Возраждение 1шка 40м2 - Copy"
+        root = Tk()
+        root.withdraw()
+        in_folder = filedialog.askdirectory(title="Папка с исходными фото")
+        root.destroy()
 
         clear()
-        input("Выберите папку куда сохранить результат. \nНажмите клавишу Enter чтобы продолжить.")
-        src_folder = filedialog.askdirectory()
-#         src_folder = r"D:\Работа\ADVANCE\Бургас\Възраждане"
+        input(
+            "Выберите папку куда сохранить результат. \nНажмите клавишу Enter чтобы продолжить."
+        )
+        root = Tk()
+        root.withdraw()
+        out_folder = filedialog.askdirectory(title="Папка для сохранения")
+        root.destroy()
 
-        return in_folder, src_folder
+        return in_folder, out_folder
 
     paths = settings["paths"]
     src, out, *_ = paths.values()
@@ -73,7 +91,7 @@ def get_watermark_settings(*, force_rewrite: bool = False) -> Watermark:
 
     if not all((path, tncy_percent)) or force_rewrite:
         input("Выберите файл с лого. \nНажмите клавишу Enter чтобы продолжить.")
-        path = ask_filename("*.SVG;*.png\0\0")
+        path = ask_filename("*.svg;*.png")
         tncy_percent = TRANSPARENCY_DEFAULT_PERCENT
 
         if force_rewrite:
@@ -87,23 +105,50 @@ def get_watermark_settings(*, force_rewrite: bool = False) -> Watermark:
     return watermark
 
 
+def is_debug() -> bool:
+    return settings["misc"]["debug"]
+
+
 def _write_update_settings(settings_):
     with open(stngs.settings_path, mode="wb") as fp:
         tomli_w.dump(settings_, fp)
-
     stngs.settings = settings_
 
 
 def _change_paths() -> Settings:
     settings_ = load_settings()
     settings_["paths"] = get_paths(force_rewrite=True)
-
     return settings_
 
 
 def _change_watermark_settings() -> Settings:
     settings_ = load_settings()
     settings_["watermark"] = get_watermark_settings(force_rewrite=True)
+    return settings_
+
+
+def _change_misc() -> Settings:
+    misc = settings["misc"]
+    user_in = ""
+    prompts = {"debug": " режим отладки."}
+    actions = {"debug": lambda: misc.update(debug=not misc["debug"])}
+
+    if misc["debug"]:
+        prompts["debug"] = "Выклюить" + prompts["debug"]
+    else:
+        prompts["debug"] = "Вклюить" + prompts["debug"]
+
+    for i, promt in enumerate(prompts.values(), start=1):
+        print(f"{i}. {promt}")
+
+    while not user_in.isdigit():
+        user_in = input("--> ")
+    user_in = int(user_in)
+
+    actions[tuple(actions.keys())[user_in - 1]]()
+
+    settings_ = load_settings()
+    settings_["misc"] = misc
 
     return settings_
 
@@ -116,7 +161,8 @@ def change_settings():
             "Выберите действие:",
             "1. Папка с исходными фото и результатами",
             "2. Настройки добавления лого",
-            sep="\n\t"
+            "3. Прочее",
+            sep="\n\t",
         )
         action = input("--> ")
 
@@ -125,6 +171,8 @@ def change_settings():
                 settings_ = _change_paths()
             case "2":
                 settings_ = _change_watermark_settings()
+            case "3":
+                settings_ = _change_misc()
             case _:
                 print("Неверная опция! Попробуйте снова!\n")
                 continue

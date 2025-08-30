@@ -5,3 +5,6 @@ output = ""
 [watermark]
 path = "_internal/data/logo.png"
 transparency_percent = 50
+
+[misc]
+debug = false
